@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VozAula</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script>window.Chart || document.write('<script src="/vendor/chart.umd.min.js"><\/script>')</script>
+</head>
+<body>
+  <header>
+    <div class="marca">
+      <div class="marca-icono" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M7 12v8m6-13v18m6-21v24m6-17v10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>
+      <div><h1>Voz<span>Aula</span></h1><p>Inteligencia para escuchar mejor</p></div>
+    </div>
+    <div class="encabezado-meta"><span class="estado-punto"></span> Reto S-1 <span class="separador">/</span> Los datos no hablan solos</div>
+  </header>
+
+  <section class="introduccion" aria-labelledby="tituloPrincipal">
+    <div><p class="sobrelinea">LA VOZ DEL ESTUDIANTE, CON CONTEXTO</p><h2 id="tituloPrincipal">Escuchar es el primer paso.<br><span>Mejorar es el siguiente.</span></h2><p class="introduccion-texto">Descubre qué funciona en el aula, qué necesita atención<br class="solo-escritorio"> y qué dicen realmente los estudiantes.</p></div>
+    <div class="sello"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 4 26 8v8c0 6-10 12-10 12S6 22 6 16V8l10-4Z" stroke="currentColor" stroke-width="1.7"/><path d="m11 16 3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><div><strong>Evidencia antes que suposiciones</strong><span>Análisis por aspecto · Revisión humana</span></div></div>
+  </section>
+
+  <section class="panel-carga" aria-label="Cargar comentarios">
+    <div class="carga-titulo"><span class="paso-numero">01</span><div><strong>Empieza con las voces de tu aula</strong><span>Importa un archivo o explora el ejemplo.</span></div></div>
+    <div class="controles">
+      <label class="archivo">
+        <input type="file" id="archivo" accept=".csv,.xlsx,.xls">
+        <span id="nombreArchivo">↑ Elegir CSV / XLSX</span>
+      </label>
+      <button id="btnAnalizar" class="primario" disabled>Analizar</button>
+      <button id="btnPrueba">Explorar dataset de prueba</button>
+      <label class="interruptor" title="Usa solo la caché: no llama a ninguna API (funciona sin internet)">
+        <input type="checkbox" id="demo">
+        <span class="deslizador"></span>
+        <span>Modo demo</span>
+      </label>
+    </div>
+  </section>
+
+  <section id="progreso" class="oculto">
+    <div class="barraProgreso"><span id="barra"></span></div>
+    <p id="msgProgreso"></p>
+  </section>
+  <div id="error" class="error oculto"></div>
+
+  <nav id="tabs" aria-label="Secciones del análisis">
+    <button data-tab="docente" class="activa">Docente</button>
+    <button data-tab="revision">Revisión humana <span id="badgeDudosos" class="badge"></span></button>
+    <button data-tab="ranking">Ranking</button>
+    <button data-tab="antes">Antes vs Ahora</button>
+    <button data-tab="como">Cómo funciona</button>
+    <button data-tab="probar">Pruébalo tú</button>
+  </nav>
+
+  <main>
+    <section id="tab-docente" class="tab">
+      <div id="vacio" class="vacio">
+        <div class="vacio-icono" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><rect x="9" y="12" width="46" height="35" rx="9" stroke="currentColor" stroke-width="2"/><path d="m20 47-2 9 13-9M21 26h22M21 34h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="49" cy="15" r="9" fill="#d6ecdf"/><path d="m45 15 3 3 5-6" stroke="#246850" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <p class="sobrelinea">CADA COMENTARIO TIENE ALGO QUE CONTAR</p>
+        <h2>Tu próximo hallazgo empieza aquí</h2>
+        <p>Carga tus comentarios para descubrir fortalezas, oportunidades<br class="solo-escritorio"> y matices que un promedio no puede mostrar.</p>
+        <div class="vacio-pasos"><span><b>1</b> Importa tus datos</span><i>→</i><span><b>2</b> Analiza por aspecto</span><i>→</i><span><b>3</b> Decide con evidencia</span></div>
+        <p class="formato-nota">Tu archivo debe incluir <code>docente</code> y <code>comentario</code>.<br>También puedes agregar <code>materia</code> y <code>semestre</code>.</p>
+      </div>
+      <div id="vistaDocente" class="oculto">
+        <div class="filaSelector">
+          <label for="buscarDocente">Buscar</label>
+          <input type="search" id="buscarDocente" placeholder="Buscar docente…" autocomplete="off"
+            style="font: inherit; font-size: 17px; background: #fff; color: var(--texto); border: 1px solid var(--borde); border-radius: 9px; padding: 10px 14px; min-width: 280px; max-width: 100%;">
+        </div>
+        <div class="filaSelector">
+          <label for="selDocente">Docente</label>
+          <select id="selDocente"></select>
+          <a id="btnReporte" class="boton" href="#">Descargar reporte</a>
+        </div>
+        <div id="notaPrior" class="nota oculto">Pocos datos en el archivo: se comparó contra el promedio institucional de referencia.</div>
+        <div class="grid2">
+          <div class="tarjeta puntaje">
+            <div class="etiqueta">Puntaje general</div>
+            <div id="scoreGeneral" class="numeroGrande">—</div>
+            <div id="detalleGeneral" class="detalle"></div>
+          </div>
+          <div class="tarjeta">
+            <div class="etiqueta">Puntaje por aspecto <small>(n = comentarios · confianza del puntaje)</small></div>
+            <div class="lienzo"><canvas id="graficoAspectos"></canvas></div>
+          </div>
+        </div>
+        <div class="grid2 iguales">
+          <div class="tarjeta">
+            <h3>Fortalezas a reconocer</h3>
+            <ul id="recsReconocer" class="recs"></ul>
+          </div>
+          <div class="tarjeta">
+            <h3>A mejorar</h3>
+            <ul id="recsMejorar" class="recs"></ul>
+          </div>
+        </div>
+        <div class="tarjeta sarcasmos">
+          <h3>Entre líneas: sarcasmos detectados <span id="nSarcasmos" class="badge"></span></h3>
+          <p class="ayuda">Lo que dice literalmente vs. lo que realmente quiso decir el estudiante.</p>
+          <div id="sarcasmos"></div>
+        </div>
+        <div class="tarjeta">
+          <h3>Comentarios mixtos: cómo se dividieron</h3>
+          <div id="mixtos"></div>
+        </div>
+        <div class="tarjeta">
+          <h3>Todos los comentarios clasificados</h3>
+          <div id="todos"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-revision" class="tab oculto">
+      <div class="tarjeta">
+        <h3>Comentarios apartados para revisión humana</h3>
+        <p class="ayuda">No se fuerzan: no cuentan en el puntaje hasta que una persona los revise. Regla (en código): confianza &lt; 0.70, o "ambiguo", o "sarcasmo" con confianza &lt; 0.85, o "fuera de tema". Un "mixto" con confianza alta <b>no</b> es dudoso.</p>
+        <div id="listaDudosos"></div>
+      </div>
+    </section>
+
+    <section id="tab-ranking" class="tab oculto">
+      <div class="tarjeta">
+        <h3>Ranking comparativo</h3>
+        <div id="tablaRanking"></div>
+      </div>
+      <div class="tarjeta explicacion">
+        <h3>¿Por qué es justo?</h3>
+        <p>Usamos un <b>promedio bayesiano</b>: cada puntaje se calcula como si el docente tuviera además <b id="mParam">m</b> comentarios "promedio" de la institución.</p>
+        <p class="formula">puntaje = (n · media_docente + m · media_institucional) / (n + m)</p>
+        <p>Con muchos comentarios manda la opinión real de sus estudiantes. Con pocos, el puntaje se acerca al promedio, así que <b>un docente con 4 comentarios muy buenos no queda de primero por suerte</b> frente a uno con 40 comentarios consistentemente buenos.</p>
+        <p>Además, los comentarios dudosos no cuentan, y cada aspecto pesa según su impacto en el aprendizaje.</p>
+      </div>
+    </section>
+
+    <section id="tab-antes" class="tab oculto">
+      <div class="tarjeta">
+        <h3>Antes (conteo de palabras) vs Ahora (VozAula)</h3>
+        <p class="ayuda">Comparamos la etiqueta correcta (hecha por personas) contra el método anterior y contra VozAula.</p>
+        <button id="btnComparar" class="primario">Ejecutar comparación</button>
+        <div id="resumenComparacion" class="kpis"></div>
+        <div id="tablaComparacion"></div>
+      </div>
+    </section>
+
+    <section id="tab-como" class="tab oculto">
+      <div class="tarjeta">
+        <h3>Pipeline</h3>
+        <div class="pipeline">
+          <div class="paso"><b>1. Carga</b><span>CSV / XLSX<br>valida columnas, quita vacíos y duplicados</span></div>
+          <div class="flecha">→</div>
+          <div class="paso"><b>2. Clasificación IA</b><span>aspecto + sentimiento por fragmento<br>lotes de 10 · caché sha256</span></div>
+          <div class="flecha">→</div>
+          <div class="paso"><b>3. Filtro de dudosos</b><span>sarcasmo, ambiguo, fuera de tema<br>→ revisión humana</span></div>
+          <div class="flecha">→</div>
+          <div class="paso"><b>4. Puntaje bayesiano</b><span>por aspecto, ponderado<br>comparable entre docentes</span></div>
+          <div class="flecha">→</div>
+          <div class="paso"><b>5. Recomendaciones</b><span>2 aspectos más bajos + el más alto<br>citando a los estudiantes</span></div>
+        </div>
+        <p class="ayuda">IA: Groq (principal) con respaldo automático en Gemini. Si no hay internet, el modo demo usa solo la caché.</p>
+      </div>
+      <div class="tarjeta">
+        <h3>Pesos de los aspectos</h3>
+        <table class="tabla">
+          <thead><tr><th>Aspecto</th><th>Peso</th><th>Por qué</th></tr></thead>
+          <tbody>
+            <tr><td>Metodología</td><td>30%</td><td>Cómo enseña (claridad, ejemplos, ritmo) es lo que más determina si el estudiante aprende.</td></tr>
+            <tr><td>Dominio del tema</td><td>25%</td><td>Sin dominio no hay buena explicación posible: es la base de lo que se enseña.</td></tr>
+            <tr><td>Trato al estudiante</td><td>20%</td><td>El respeto y la disposición condicionan que el estudiante pregunte y participe.</td></tr>
+            <tr><td>Evaluación</td><td>15%</td><td>Evaluaciones justas miden y refuerzan el aprendizaje, pero no lo producen.</td></tr>
+            <tr><td>Puntualidad</td><td>10%</td><td>Afecta el tiempo efectivo de clase, pero sola impacta menos el aprendizaje.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-probar" class="tab oculto">
+      <div class="tarjeta probar">
+        <h3>Pruébalo tú</h3>
+        <label for="txtProbar" class="ayuda">Escribe un comentario sobre un docente, como lo diría un estudiante.</label>
+        <textarea id="txtProbar" rows="4" maxlength="1000" placeholder="Ej: explica re bien pero los parciales no tienen nada que ver con lo que vimos"></textarea>
+        <div class="probar-acciones">
+          <button id="btnProbar" class="primario">Clasificar</button>
+          <span class="ayuda">Ejemplos:</span>
+          <button class="ejemplo" data-texto="Uy sí, qué profe tan organizado, el parcial lo cambió de fecha tres veces y nos avisó por WhatsApp a las 2 de la mañana.">Sarcástico</button>
+          <button class="ejemplo" data-texto="La profe domina muchísimo la materia y explica con calma, pero los talleres los califica sin decir qué estuvo mal.">Mixto</button>
+          <button class="ejemplo" data-texto="Es un profe muy particular, cada quien saca sus conclusiones.">Ambiguo</button>
+        </div>
+        <div id="resultadoProbar"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="pie"><span>VozAula <span class="pie-punto">·</span> Los datos no hablan solos.</span><span>La tecnología analiza. Las personas deciden.</span></footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
